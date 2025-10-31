@@ -8,12 +8,35 @@ import {
   Button,
   MenuItem,
 } from "@mui/material";
+import axios from "axios"; // Add axios for API calls
+import { useNavigate } from "react-router-dom"; // For redirect
 
 const Register: React.FC = () => {
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [role, setRole] = useState<string>("user");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const navigate = useNavigate();
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    try {
+      const res = await axios.post("http://localhost:8080/register", {
+        name,
+        email,
+        password,
+        role,
+      });
+      setSuccess("Registration successful! Redirecting to login...");
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Registration failed");
+    }
+  };
 
   return (
     <Box
@@ -45,6 +68,7 @@ const Register: React.FC = () => {
           <Box
             component="form"
             sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+            onSubmit={handleRegister}
           >
             <TextField
               label="Name"
@@ -84,6 +108,16 @@ const Register: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            {error && (
+              <Typography color="error" variant="body2">
+                {error}
+              </Typography>
+            )}
+            {success && (
+              <Typography color="primary" variant="body2">
+                {success}
+              </Typography>
+            )}
 
             <Button
               type="submit"

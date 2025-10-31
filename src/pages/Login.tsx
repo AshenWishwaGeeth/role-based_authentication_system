@@ -30,11 +30,14 @@ const Login: React.FC = () => {
       localStorage.setItem("token", token);
       localStorage.setItem("role", user.role);
       localStorage.setItem("user", JSON.stringify(user));
+      // Log token and user info
+      console.log("JWT Token:", token);
+      console.log("User Info:", user);
       // Redirect based on role
       if (user.role === "admin") {
-        navigate("/admin-dashboard");
+        navigate("/admin");
       } else {
-        navigate("/user-dashboard");
+        navigate("/user");
       }
     } catch (err: any) {
       setError(err.response?.data?.error || "Login failed");

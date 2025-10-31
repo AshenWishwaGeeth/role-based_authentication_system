@@ -9,6 +9,7 @@ import {
   Stack,
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   name: string;
@@ -17,6 +18,12 @@ interface User {
 
 const UserDashboard: React.FC = () => {
   const [user] = useState<User>({ name: "John Doe", email: "john@example.com" });
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
   return (
     <Box
@@ -52,6 +59,7 @@ const UserDashboard: React.FC = () => {
                 fontWeight: "bold",
                 "&:hover": { transform: "scale(1.05)" },
               }}
+              onClick={handleLogout}
             >
               Logout
             </Button>

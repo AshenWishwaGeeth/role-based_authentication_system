@@ -14,6 +14,7 @@ import {
   Chip,
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   id: number;
@@ -27,6 +28,13 @@ const AdminDashboard: React.FC = () => {
     { id: 2, name: "John Smith", role: "user" },
     { id: 3, name: "Emily Johnson", role: "user" },
   ]);
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
   return (
     <Box
@@ -57,6 +65,7 @@ const AdminDashboard: React.FC = () => {
                 fontWeight: "bold",
                 "&:hover": { transform: "scale(1.05)" },
               }}
+              onClick={handleLogout}
             >
               Logout
             </Button>

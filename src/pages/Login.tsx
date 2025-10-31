@@ -4,20 +4,42 @@ import {
   Box,
   Button,
   Container,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
   Typography,
   Paper,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [role, setRole] = useState<string>("user");
+  const [error, setError] = useState<string>("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const res = await axios.post("http://localhost:8080/login", {
+        email,
+        password,
+      });
+      const { token, user } = res.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", user.role);
+      localStorage.setItem("user", JSON.stringify(user));
+      // Redirect based on role
+      if (user.role === "admin") {
+        navigate("/admin-dashboard");
+      } else {
+        navigate("/user-dashboard");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Login failed");
+    }
+  };
 
   return (
     <Box
@@ -59,6 +81,7 @@ const Login: React.FC = () => {
           <Box
             component="form"
             sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+            onSubmit={handleLogin}
           >
             <TextField
               label="Email"
@@ -80,17 +103,12 @@ const Login: React.FC = () => {
               variant="outlined"
             />
 
-            <FormControl fullWidth>
-              <InputLabel>Role</InputLabel>
-              <Select
-                value={role}
-                label="Role"
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <MenuItem value="user">User</MenuItem>
-                <MenuItem value="admin">Admin</MenuItem>
-              </Select>
-            </FormControl>
+            {/* Error message */}
+            {error && (
+              <Typography color="error" variant="body2">
+                {error}
+              </Typography>
+            )}
 
             <Button
               type="submit"

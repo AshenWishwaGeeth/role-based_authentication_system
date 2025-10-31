@@ -19,10 +19,10 @@ var db *sql.DB
 var jwtSecret []byte
 
 type User struct {
-	ID        int       `json:"id"`
+	ID        string    `json:"id"` // changed from int to string
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
-	Password  string    `json:"-"`
+	PasswordHash string `json:"-"`
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }
@@ -145,20 +145,22 @@ func loginHandler(c *gin.Context) {
 
 	var user User
 	err := db.QueryRow(`SELECT id, name, email, password_hash, role, created_at FROM users WHERE email=$1`, req.Email).
-		Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.CreatedAt)
+		Scan(&user.ID, &user.Name, &user.Email, &user.PasswordHash, &user.Role, &user.CreatedAt)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		fmt.Println("Login DB error:", err) // Debug log
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials", "details": err.Error()})
 		return
 	}
 
-	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)) != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)) != nil {
+		fmt.Println("Password mismatch for user:", req.Email) // Debug log
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials", "details": "Password mismatch"})
 		return
 	}
 
 	// Generate JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
+		"user_id": user.ID, // string
 		"role":    user.Role,
 		"exp":     time.Now().Add(72 * time.Hour).Unix(),
 	})
@@ -202,7 +204,7 @@ func authMiddleware(roles ...string) gin.HandlerFunc {
 		}
 
 		claims := token.Claims.(jwt.MapClaims)
-		c.Set("user_id", int(claims["user_id"].(float64)))
+		c.Set("user_id", claims["user_id"].(string)) // changed from int(claims["user_id"].(float64))
 		c.Set("role", claims["role"].(string))
 
 		if len(roles) > 0 {
@@ -226,7 +228,7 @@ func authMiddleware(roles ...string) gin.HandlerFunc {
 
 // Get current user
 func meHandler(c *gin.Context) {
-	userID := c.GetInt("user_id")
+	userID := c.GetString("user_id") // changed from GetInt to GetString
 	var user User
 	err := db.QueryRow(`SELECT id, name, email, role, created_at FROM users WHERE id=$1`, userID).
 		Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.CreatedAt)
